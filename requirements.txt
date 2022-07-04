@@ -1,0 +1,5 @@
+Conda packages installations
+conda config --prepend channels conda-forge
+
+geopands
+networkx
