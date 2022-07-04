@@ -31,17 +31,14 @@ to_crs_meter_switzerland = 32632 # Target projection for Switzerland
 
 path_temp = "C:/_scrap"
 path_out = "K:/superblocks/01-data/cities"
-#path_out = "C:/_results_zh"
-#path_out = "C:/_results_swiss_communities"
+path_pop_data = "R:/Scratch/313/sven/pop_fb"  # Download data as outlined from data source in publication
 write_anyway = False
-
 
 # working steps
 download_data = True
 assign_attributes_to_graph = True
 calculate_pop_density = True
 
-#select_cadastre_area = True
 hp_rw.create_folder(path_out)
 
 # Window selection
@@ -50,108 +47,65 @@ radius_pop_density = 100  # [m]
 radius_GFA_density = 100  # [m]
 sleep_time = 50
 crit_bus_is_big_street = False
-crit_swiss_buildings = False
 swiss_community = False
 
-if swiss_community:
-    path_communities = "C:/DATA/are_gemeindetypologie/data/ARE_GemTyp00_9.shp"
-    #path_communities = "K:/superblocks/01-data/swiss_communities/community_261.shp"
-    gemeinden = gpd.read_file(path_communities)
-    print("GEMEINDE TYPS: {}".format(list(set(gemeinden['NAME']))))
-
-    #'Grosszentren', 'Gürtel der Grosszentren', 'Gürtel der Mittelzentren', 'Mittelzentren', 'Nebenzentren der Grosszentren'
-    gemeinden = gemeinden.loc[gemeinden['NAME'].isin(['Grosszentren'])]
-    #gemeinden = gemeinden.loc[gemeinden['GDE_NO'] == 261]  #ONLY ZH
-    case_studies = gemeinden.index.tolist()
-    case_studies = case_studies[::-1]
-else:
-    case_studies = [
-        #'atlanta',       
-        #'bankok',        
-        #'barcelona',     
-        #'berlin',         
-        #'budapest',      
-        #'cairo',         
-        #'hong_kong',     
-        #'lagos',          
-        #'london',        
-        #'madrid',        
-        #'melbourne',     
-        #'mexico_city',   
-        #'paris',         
-        #'rome',          
-        #'sydney',          
-        #'tokyo',         
-        #'warsaw',        
-        #'zurich',
-    
-        #'frankfurt',
-        #'freiburg',
-        #'hamburg',
-        'munchen'
-    ]
-    #case_studies = case_studies[::-1]
+case_studies = [
+    'atlanta',       
+    #'bankok',        
+    #'barcelona',     
+    #'berlin',         
+    #'budapest',      
+    #'cairo',         
+    #'hong_kong',     
+    #'lagos',          
+    #'london',        
+    #'madrid',        
+    #'melbourne',     
+    #'mexico_city',   
+    #'paris',         
+    #'rome',          
+    #'sydney',          
+    #'tokyo',         
+    #'warsaw',        
+    #'zurich',
+    #'frankfurt',
+    #'freiburg',
+    #'hamburg',
+    #'munchen'
+]
 
 for city in case_studies:
     path_out_city = os.path.join(path_out, str(city))
-
-    # Get case study data
-    path_pop_data = "R:/Scratch/313/sven/pop_fb"  #NOTE:
-    #city_metadata = hp_rw.city_metadata(city)
     city_metadata = hp_rw.city_metadata(city, path_pop_data=path_pop_data)
     to_crs_meter = city_metadata['crs']
     path_raw_pop = city_metadata['path_raw_pop']
     centroid_tuple = city_metadata['centroid_tuple']
-    print(" ")
     print("=== city: {}".format(city))
 
     if download_data:
-        if swiss_community:
-            gdf_gemeinde = gemeinden.loc[[city]]
-            city = list(gdf_gemeinde['GDE_NO'])[0]
-            hp_rw.create_folder(path_out_city)
+        hp_rw.create_folder(path_out_city)
 
-            # Create bounding box from community
-            to_crs_meter = to_crs_meter_switzerland
-            gdf_gemeinde_osm_crs = gdf_gemeinde.to_crs("epsg:{}".format(crs_bb))
-            bb = hp_osm.BB(
-                ymax=max(gdf_gemeinde_osm_crs.geometry.bounds.maxy),
-                ymin=min(gdf_gemeinde_osm_crs.geometry.bounds.miny),
-                xmax=max(gdf_gemeinde_osm_crs.geometry.bounds.maxx),
-                xmin=min(gdf_gemeinde_osm_crs.geometry.bounds.minx))
-            bb_osm = bb.as_gdf(crs_orig=crs_overpass)
-            bb_gdf = bb_osm.to_crs("epsg:{}".format(to_crs_meter))
+        # Download first bounding box shp (as WSG84 crs)
+        centroid = Point(centroid_tuple)
+        centroid = gpd.GeoDataFrame([centroid], columns=['geometry'], crs=crs_bb)
+        centroid.to_file(os.path.join(path_out_city, "centroid.shp"))
 
-            if not os.path.exists(os.path.join(path_out_city, "extent.shp")) or write_anyway:
-                bb_gdf.to_file(os.path.join(path_out_city, "extent.shp"))
-                extent_gemeinde = gdf_gemeinde_osm_crs.to_crs("epsg:{}".format(to_crs_meter))
-                bb_gdf = extent_gemeinde
-                bb_gdf.to_file(os.path.join(path_out_city, "extent_gemeinde.shp"))
-        else:
+        centroid_to_crs_meter = centroid.to_crs("epsg:{}".format(to_crs_meter))
+        centroid.to_file(os.path.join(path_out_city, "centroid_{}.shp".format(to_crs_meter)))
+        bb = hp_osm.BB(
+            ymax=centroid_to_crs_meter.geometry.y[0] + length_in_m / 2,
+            ymin=centroid_to_crs_meter.geometry.y[0] - length_in_m / 2,
+            xmax=centroid_to_crs_meter.geometry.x[0] + length_in_m / 2,
+            xmin=centroid_to_crs_meter.geometry.x[0] - length_in_m / 2)
 
-            hp_rw.create_folder(path_out_city)
-
-            # Download first bounding box shp (as WSG84 crs)
-            centroid = Point(centroid_tuple)
-            centroid = gpd.GeoDataFrame([centroid], columns=['geometry'], crs=crs_bb)
-            centroid.to_file(os.path.join(path_out_city, "centroid.shp"))
-
-            centroid_to_crs_meter = centroid.to_crs("epsg:{}".format(to_crs_meter))
-            centroid.to_file(os.path.join(path_out_city, "centroid_{}.shp".format(to_crs_meter)))
-            bb = hp_osm.BB(
-                ymax=centroid_to_crs_meter.geometry.y[0] + length_in_m / 2,
-                ymin=centroid_to_crs_meter.geometry.y[0] - length_in_m / 2,
-                xmax=centroid_to_crs_meter.geometry.x[0] + length_in_m / 2,
-                xmin=centroid_to_crs_meter.geometry.x[0] - length_in_m / 2)
-
-            bb_gdf = bb.as_gdf(crs_orig=to_crs_meter)
-            bb_gdf.to_file(os.path.join(path_out_city, "extent.shp"))
-            bb_osm = bb_gdf.to_crs("epsg:{}".format(crs_bb))
-            bb = hp_osm.BB(
-                ymax=bb_osm.geometry.bounds.maxy[0],
-                ymin=bb_osm.geometry.bounds.miny[0],
-                xmax=bb_osm.geometry.bounds.maxx[0],
-                xmin=bb_osm.geometry.bounds.minx[0])
+        bb_gdf = bb.as_gdf(crs_orig=to_crs_meter)
+        bb_gdf.to_file(os.path.join(path_out_city, "extent.shp"))
+        bb_osm = bb_gdf.to_crs("epsg:{}".format(crs_bb))
+        bb = hp_osm.BB(
+            ymax=bb_osm.geometry.bounds.maxy[0],
+            ymin=bb_osm.geometry.bounds.miny[0],
+            xmax=bb_osm.geometry.bounds.maxx[0],
+            xmin=bb_osm.geometry.bounds.minx[0])
 
         # ==============================================================================
         # The following overpass turbo commands have been implemented
@@ -373,24 +327,13 @@ for city in case_studies:
                 xmin=min(gdf_street.geometry.bounds.minx))
             bb_pop = bb.as_gdf(crs_orig=int(gdf_street.crs.srs.split(":")[1]))
 
-            if crit_swiss_buildings:
-                path_swiss_buildings = "K:/superblocks/01-data/swiss_buildings_population/ch_buildings_gwr.shp"
-                bb_gdf = gpd.read_file(os.path.join(path_out_city, "extent.shp"))
-                bb_gdf_21781 = bb_gdf.to_crs("epsg:{}".format(21781))
-                pop_pnts = gpd.read_file(path_swiss_buildings)
-                pop_pnts.crs = "epsg:{}".format(21781)
-                pop_pnts = pe.filter_swiss_buildings(pop_pnts, bb_gdf_21781)
-                pop_pnts['population'] = pop_pnts['GAPTO']
-                pop_pnts = hp_net.project(pop_pnts, to_crs_meter)
-                pop_pnts.to_file(os.path.join(path_out_city, "fb_pop.shp"))
+            if city_metadata['data_type'] == 'GeoTif':
+                pop_pnts = pe.get_fb_pop_data_tif(bb_pop, crs_pop_fb, path_temp=path_temp, path_raw=path_raw_pop, label='population') 
+            elif city_metadata['data_type'] == 'csv':
+                pop_pnts = pe.get_fb_pop_data(bb_pop, crs_pop_fb, path_raw=path_raw_pop, label='population')
             else:
-                if city_metadata['data_type'] == 'GeoTif':
-                    pop_pnts = pe.get_fb_pop_data_tif(bb_pop, crs_pop_fb, path_temp=path_temp, path_raw=path_raw_pop, label='population') 
-                elif city_metadata['data_type'] == 'csv':
-                    pop_pnts = pe.get_fb_pop_data(bb_pop, crs_pop_fb, path_raw=path_raw_pop, label='population')
-                else:
-                    raise Exception("Wrong format type")
-                pop_pnts.to_file(os.path.join(path_out_city, "fb_pop.shp"))
+                raise Exception("Wrong format type")
+            pop_pnts.to_file(os.path.join(path_out_city, "fb_pop.shp"))
 
             # ----Calculate population density
             G = hp_net.calc_edge_and_node_pop_density(

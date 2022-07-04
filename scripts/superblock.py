@@ -65,11 +65,6 @@ label_mini = 'b_mini'
 label_miniS = 'b_miniS'
 
 # [decimal] Percentage how much deviation form origianl barcelnoian superblock
-crit_deviations_raw = list(np.array(range(0, 22, 2)) / 10)
-crit_deviations_raw = [float(i) for i in crit_deviations_raw]
-crit_deviations_raw = [0.0, 0.5, 1.0, 1.5, 2.0]
-crit_deviations_raw = [float(i) for i in crit_deviations_raw]
-crit_deviations = crit_deviations_raw
 crit_deviations = [1.0]
 
 # Define for which crit_deviation the superblocks are written out
@@ -80,81 +75,35 @@ crit_write_street_area = True
 crit_write_buildings = True
 crit_write_street_negative = True
 
-if swiss_example:
+path_city_raw = "K:/superblocks/01-data/cities"
+path_results = "K:/superblocks/03-results_publication/_results_superblockR1"
 
-    # Load BFS geometries
-    if local:
-        path_communities = "C:/DATA/are_gemeindetypologie/data/ARE_GemTyp00_9.shp"
-    else:
-        path_communities = "J:/Sven/vse/raw_data/ARE_GemTyp00_9.shp"
+cities = [
+    #'atlanta', 
+    #'bankok',
+    #'barcelona',
+    #'berlin',
+    #'budapest',
+    #'cairo',
+    #'hong_kong',
+    #'lagos',
+    #'london',
+    #'madrid',
+    #'melbourne',
+    #'mexico_city',
+    #'paris',
+    #'rome',
+    #'sydney', 
+    #'tokyo',
+    #'warsaw',
+    #'zurich',
+    #'frankfurt',
+    #'freiburg',
+    #'hamburg'
+    #'munchen'
+    ]
 
-    gemeinden = gpd.read_file(path_communities)
-    print("GEMEINDE TYPS: {}".format(list(set(gemeinden['NAME']))))
-
-    #'Grosszentren', 'Gürtel der Grosszentren', 'Gürtel der Mittelzentren', 'Mittelzentren', 'Nebenzentren der Grosszentren'
-    gemeinden = gemeinden.loc[gemeinden['NAME'].isin(['Grosszentren'])]
-    #gemeinden = gemeinden.loc[gemeinden['GDE_NO'] == 261]  #ONLY ZH
-    case_studies = gemeinden['BFS_NO'].tolist()
-    case_studies.sort()
-
-    # BFS Number of major Swiss cities
-    cities = case_studies
-    cities = [230, 261, 351, 1061, 2701, 3203, 5192, 5586, 6621]
-    print("Cities: {}".format(cities))
-
-    # 1061, 3203, 5192, 5586 --> All these have no cadastre data
-    #cities = [1061, 351, 261] # [
-        # 230   Winterthur
-        # 2701  Basel
-        # 1061  Luzern
-        # 351   Bern
-        # 261   Zürich
-        # 3203  St Gallen
-        # 5192  Lugano
-        # 5586 Lausanne
-    initial_street_name = "G_with_traffic_raw.shp"
-
-    if local:
-        path_city_raw = "C:/_results_swiss_communities"
-        path_results = "C:/_results_swiss_communities/_results"
-    else:
-        path_city_raw = "J:/Sven/greening/_results_swiss_communities"
-        path_results = "J:/Sven/greening/_results_swiss_communities/_results"
-else:
-    if local:
-        path_city_raw = "K:/superblocks/01-data/cities"
-        path_results = "C:/_results_superblockR1"
-    else:
-        path_city_raw = "K:/superblocks/01-data/cities"
-        path_results = "K:/superblocks/03-results_publication/_results_superblockR1"
-
-    cities = [
-        #'atlanta',  #ok
-        #'bankok', #   ok
-        #'barcelona', # ok
-        #'berlin', # ok
-        #'budapest', # ok
-        #'cairo', # ok
-        #'hong_kong', # ok
-        #'lagos', # ok
-        #'london', # ok
-        #'madrid', # ok
-        #'melbourne', #ok
-        #'mexico_city', # ok
-        #'paris', # ok
-        #'rome', # ok
-        #'sydney', #ok 
-        #'tokyo', # 1 1,5 2
-        #'warsaw', # ok
-        #'zurich', # ok
-        
-        #'frankfurt',
-        #'freiburg',
-        #'hamburg'
-        #'munchen'
-      ]
-
-    initial_street_name = "street_network_edges_with_attributes_pop_density.shp"
+initial_street_name = "street_network_edges_with_attributes_pop_density.shp"
 
 if parallel_mode:
     counter = int(sys.argv[1])
