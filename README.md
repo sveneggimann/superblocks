@@ -18,3 +18,11 @@ Script execution
 
 
 If you are interested in using this code for academic purposes, please get in touch (sven.eggimann@empa.ch) for support and potential collaborations.
+
+
+This code was used in the following academic publications:
+
+- Eggimann, S. (2022): The potential of implementing superblocks for multifunctional street use in cities
+Nature Sustainability, 5, 406–414. https://www.nature.com/articles/s41893-022-00855-2
+
+- Eggimann S. (2022): Expanding urban green space with superblocks. Land Use Policy, 106111. https://doi.org/10.1016/j.landusepol.2022.106111
