@@ -17,7 +17,7 @@ Script execution
 - Step 2: Execute the superblock script to simulat superblocks
 
 
-If you are interested in using this code for academic purposes, please get in touch (sven.eggimann@zhaw.ch) for support and potential collaborations.
+If you are interested in using this code for academic purposes, please get in touch (sven.eggimann@mail.huji.ac.il) for support and potential collaborations.
 
 
 This code was used in the following academic publications:
